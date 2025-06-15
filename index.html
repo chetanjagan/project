@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Plagiarism Checker | Advanced Document Comparison</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --primary-light: rgba(99, 102, 241, 0.1);
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --text-light: #64748b;
+            --border: #e5e7eb;
+            --border-hover: #d1d5db;
+            --success: #10b981;
+            --success-light: rgba(16, 185, 129, 0.1);
+            --error: #ef4444;
+            --error-light: rgba(239, 68, 68, 0.1);
+            --warning: #f59e0b;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            line-height: 1.5;
+        }
+
+        .container {
+            background: var(--card-bg);
+            padding: 3rem;
+            border-radius: 1.25rem;
+            width: 100%;
+            max-width: 640px;
+            box-shadow: var(--shadow-xl);
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+        }
+
+        .container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary);
+            margin-bottom: 2.5rem;
+            font-weight: 700;
+            font-size: 2.5rem;
+            letter-spacing: -0.025em;
+            position: relative;
+            display: inline-block;
+            width: 100%;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary), var(--primary-hover));
+            border-radius: 2px;
+        }
+
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 1.75rem;
+        }
+
+        .input-group {
+            position: relative;
+            margin-bottom: 0.5rem;
+        }
+
+        .file-input-container {
+            position: relative;
+            border: 2px dashed var(--border);
+            border-radius: 0.75rem;
+            padding: 2rem 1rem;
+            text-align: center;
+            background-color: var(--primary-light);
+            transition: var(--transition);
+            cursor: pointer;
+        }
+
+        .file-input-container:hover {
+            border-color: var(--primary);
+            background-color: rgba(99, 102, 241, 0.15);
+        }
+
+        .file-input-container.active {
+            border-color: var(--primary);
+            background-color: rgba(99, 102, 241, 0.2);
+        }
+
+        .file-input-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+            color: var(--primary);
+            font-weight: 600;
+            pointer-events: none;
+        }
+
+        .file-input-label i {
+            font-size: 2rem;
+            color: var(--primary);
+        }
+
+        .file-input-label span {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            font-weight: 400;
+        }
+
+        input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-name {
+            margin-top: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text);
+            font-weight: 500;
+            display: none;
+        }
+
+        .file-name.show {
+            display: block;
+        }
+
+        .shingle-input {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .shingle-input label {
+            font-size: 0.875rem;
+            color: var(--text-light);
+            font-weight: 500;
+        }
+
+        input[type="number"] {
+            width: 100%;
+            padding: 0.875rem 1rem;
+            border: 2px solid var(--border);
+            border-radius: 0.75rem;
+            font-size: 1rem;
+            color: var(--text);
+            background: #f9fafb;
+            transition: var(--transition);
+            appearance: none;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+
+        button {
+            width: 100%;
+            padding: 1rem;
+            background: linear-gradient(to right, var(--primary), var(--primary-hover));
+            color: white;
+            border: none;
+            border-radius: 0.75rem;
+            font-size: 1.125rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 1rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: 0.5s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(99, 102, 241, 0.3);
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button i {
+            transition: var(--transition);
+        }
+
+        button:hover i {
+            transform: scale(1.1);
+        }
+
+        .result-container {
+            margin-top: 2.5rem;
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: var(--success-light);
+            border: 2px solid var(--success);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
+
+        .result i {
+            color: var(--success);
+            font-size: 1.75rem;
+        }
+
+        .result-content {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .result-title {
+            font-weight: 700;
+            color: var(--success);
+        }
+
+        .result-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text);
+        }
+
+        .error {
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            background: var(--error-light);
+            border: 2px solid var(--error);
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .error i {
+            color: var(--error);
+            font-size: 1.75rem;
+        }
+
+        .error-content strong {
+            font-weight: 700;
+            color: var(--error);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1.5rem;
+        }
+
+        .loading i {
+            font-size: 2rem;
+            color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 2rem;
+                margin: 1rem;
+                border-radius: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+                margin-bottom: 2rem;
+            }
+
+            button {
+                padding: 0.875rem;
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 1.5rem;
+            }
+
+            h1 {
+                font-size: 1.75rem;
+            }
+
+            .file-input-label i {
+                font-size: 1.75rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Plagiarism Detector</h1>
+        <form method="POST" enctype="multipart/form-data" id="plagiarismForm">
+            <div class="input-group">
+                <div class="file-input-container" id="file1Container">
+                    <input type="file" name="file1" id="file1" accept=".txt,.pdf,.docx,.doc" required>
+                    <label class="file-input-label">
+                        <i class="fas fa-file-upload"></i>
+                        Upload First Document
+                        <span>Supports: TXT, PDF, DOCX</span>
+                    </label>
+                    <div class="file-name" id="file1Name"></div>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <div class="file-input-container" id="file2Container">
+                    <input type="file" name="file2" id="file2" accept=".txt,.pdf,.docx,.doc" required>
+                    <label class="file-input-label">
+                        <i class="fas fa-file-upload"></i>
+                        Upload Second Document
+                        <span>Supports: TXT, PDF, DOCX</span>
+                    </label>
+                    <div class="file-name" id="file2Name"></div>
+                </div>
+            </div>
+
+            <div class="shingle-input">
+                <label for="shingle_size">Shingle Size (N-gram length)</label>
+                <input type="number" name="shingle_size" id="shingle_size" min="1" max="10" value="3">
+            </div>
+
+            <button type="submit" id="submitBtn">
+                <i class="fas fa-search"></i>
+                Analyze Documents
+            </button>
+        </form>
+
+        <div class="loading" id="loadingIndicator">
+            <i class="fas fa-spinner"></i>
+            <p>Analyzing documents...</p>
+        </div>
+
+        {% if similarity is not none %}
+            <div class="result-container">
+                <div class="result">
+                    <i class="fas fa-check-circle"></i>
+                    <div class="result-content">
+                        <span class="result-title">Jaccard Similarity Score</span>
+                        <span class="result-value">{{ "%.2f"|format(similarity * 100) }}%</span>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+
+        {% if error %}
+            <div class="result-container">
+                <div class="error">
+                    <i class="fas fa-times-circle"></i>
+                    <div class="error-content">
+                        <strong>Error:</strong> {{ error }}
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // File input handling
+        document.getElementById('file1').addEventListener('change', function(e) {
+            const container = document.getElementById('file1Container');
+            const fileName = document.getElementById('file1Name');
+            
+            if (this.files.length > 0) {
+                container.classList.add('active');
+                fileName.textContent = this.files[0].name;
+                fileName.classList.add('show');
+            } else {
+                container.classList.remove('active');
+                fileName.classList.remove('show');
+            }
+        });
+
+        document.getElementById('file2').addEventListener('change', function(e) {
+            const container = document.getElementById('file2Container');
+            const fileName = document.getElementById('file2Name');
+            
+            if (this.files.length > 0) {
+                container.classList.add('active');
+                fileName.textContent = this.files[0].name;
+                fileName.classList.add('show');
+            } else {
+                container.classList.remove('active');
+                fileName.classList.remove('show');
+            }
+        });
+
+        // Form submission handling
+        document.getElementById('plagiarismForm').addEventListener('submit', function(e) {
+            const submitBtn = document.getElementById('submitBtn');
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            loadingIndicator.classList.add('show');
+        });
+
+        // Add animation to result cards when they appear
+        const resultContainers = document.querySelectorAll('.result-container');
+        resultContainers.forEach(container => {
+            container.style.opacity = '0';
+            setTimeout(() => {
+                container.style.opacity = '1';
+            }, 100);
+        });
+    </script>
+</body>
+</html>
